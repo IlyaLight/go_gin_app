@@ -10,6 +10,8 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.Default()
 
+	r.GET("/auth", api.GetAuth)
+	r.GET("/user", middleware.Authentication(), api.GetUSER)
 	r.POST("/user", api.PostUser)
 
 	// Handle GET requests at /article/view/some_article_id

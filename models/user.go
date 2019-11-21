@@ -1,29 +1,34 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"database/sql"
+	"github.com/pkg/errors"
+)
 
 type User struct {
-	ID       int       `json:"id"			gorm:"primary_key"`
-	Username string    `json:"username"`
-	Password string    `json:"password"`
-	Article  []Article `gorm:"ForeignKey:UserId"`
+	ID       int    `json:"id" db:"id"`
+	Username string `json:"username" db:"username"`
+	Email    string `json:"email" db:"email"`
+	Password string `json:"password"  db:"password"`
+	Article  []Article
 }
 
-// CheckAuth checks if authentication information exists
-func CheckAuth(username, password string) (bool, error) {
-	var user User
-	err := db.Select("id").Where(User{Username: username, Password: password}).First(&user).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
+func GetUserByUsername(username *string) (error, *User) {
+	user := User{}
+	err := db.Get(&user, db.Rebind("SELECT * FROM users WHERE username = ? "), username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return errors.WithStack(err), &user
 	}
-
-	if user.ID > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return err, &user
 }
 
-func AddUser(user User) {
-	db.Create(&user)
+func (User) TableName() string {
+	return "users"
+}
+
+func AddUser(user *User) {
+	Insert(db, user)
 }

@@ -3,3 +3,4 @@
 
 [app]
     JwtSecret = 233
+    TokenTimeLive = 3  # hours

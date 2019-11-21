@@ -15,3 +15,17 @@ func PostUser(c *gin.Context) {
 	}
 	service.AddUser(&newUser)
 }
+
+func GetAuth(c *gin.Context) {
+	username := c.Query("username")
+	password := c.Query("password")
+
+	if user, _ := service.VerifyUser(username, password); user != nil {
+		c.JSON(200, user)
+	}
+
+}
+
+func GetUSER(c *gin.Context) {
+
+}

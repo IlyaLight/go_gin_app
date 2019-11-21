@@ -17,7 +17,7 @@ func Authentication() gin.HandlerFunc {
 		if token == "" {
 			//code = http.StatusBadRequest
 		} else {
-			_, err := util.ParseToken(token)
+			_, err := util.CheckToken(&token)
 			if err != nil {
 				switch err.(*jwt.ValidationError).Errors {
 				case jwt.ValidationErrorExpired:

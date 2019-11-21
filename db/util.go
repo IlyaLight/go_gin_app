@@ -22,4 +22,5 @@ func Migration(dbUrl string) {
 		}
 		log.Fatal(err)
 	}
+
 }

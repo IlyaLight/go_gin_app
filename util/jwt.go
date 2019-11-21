@@ -1,13 +1,13 @@
 package util
 
 import (
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"go_gin_app/models"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
-
-var jwtSecret []byte
 
 type Claims struct {
 	Username string `json:"username"`
@@ -16,36 +16,35 @@ type Claims struct {
 }
 
 // GenerateToken generate tokens used for auth
-func GenerateToken(username, password string) (string, error) {
+func GenerateToken(user *models.User) (*string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(3 * time.Hour)
-
+	expireTime := nowTime.Add(time.Duration(viper.GetInt("app.TokenTimeLive")) * time.Hour)
 	claims := Claims{
-		EncodeMD5(username),
-		EncodeMD5(password),
+		user.Username,
+		user.Password,
 		jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
 			Issuer:    "gin-blog",
 		},
 	}
-
+	// Устанавливаем набор параметров для токена
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := tokenClaims.SignedString(viper.GetString("app.JwtSecret"))
-
-	return token, err
+	// Подписываем токен нашим секретным ключем
+	token, err := tokenClaims.SignedString([]byte(viper.GetString("app.JwtSecret")))
+	return &token, errors.WithStack(err)
 }
 
 // ParseToken parsing token
-func ParseToken(token string) (*Claims, error) {
-	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
-	})
-
+func CheckToken(token *string) (bool, error) {
+	tokenClaims, err := jwt.ParseWithClaims(*token, &Claims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return []byte(viper.GetString("app.JwtSecret")), nil
+		})
 	if tokenClaims != nil {
-		if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
-			return claims, nil
+		if _, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
+			return true, nil
 		}
 	}
 
-	return nil, err
+	return false, err
 }

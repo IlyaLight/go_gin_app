@@ -1,8 +1,9 @@
 BEGIN;
 CREATE TABLE IF NOT EXISTS "users" (
                                        "id" serial PRIMARY KEY,
-                                       "username" varchar(80),
-                                       "password" varchar(80)
+                                       "username" varchar(80) UNIQUE,
+                                       "password" char(60),
+                                       "email" varchar(80) UNIQUE
 );
 CREATE TABLE IF NOT EXISTS "tags" (
                                       "id" serial PRIMARY KEY,
@@ -13,8 +14,8 @@ CREATE TABLE IF NOT EXISTS "tags" (
 );
 CREATE TABLE IF NOT EXISTS "articles" (
                                           "id" serial PRIMARY KEY,
-                                          "user_id" integer references users(id),
-                                          "tag_id" integer references tags(id),
+                                          "user_id" integer REFERENCES users(id),
+                                          "tag_id" integer REFERENCES tags(id),
                                           "title" varchar(80),
                                           "desc" varchar(80),
                                           "content" text,

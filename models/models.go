@@ -2,24 +2,24 @@ package models
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
 	"go_gin_app/config"
 	migration "go_gin_app/db"
-	"log"
+	//"log"
 )
 
 const dialect = "postgres"
 
-var db *gorm.DB
+var db *sqlx.DB
 var name int
 
 type Model struct {
 	ID int `gorm:"primary_key" json:"id"`
 }
 
-// Setup initializes the database instance
-func Setup() {
+// SetupConnection initializes the database instance
+func SetupConnection() {
 
 	dbArgs := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		config.DatabaseSetting.User,
@@ -27,18 +27,21 @@ func Setup() {
 		config.DatabaseSetting.Host,
 		config.DatabaseSetting.Port,
 		config.DatabaseSetting.Name)
-
-	var err error
-	db, err = gorm.Open(dialect, dbArgs)
-	if err != nil {
-		log.Fatalf("models.Setup err: %v", err)
-	}
-	db.LogMode(true)
+	db = sqlx.MustConnect("pgx", dbArgs)
+	db.SetMaxIdleConns(10)
+	db.SetMaxOpenConns(100)
 
 	migration.Migration(dbArgs)
+	//addTestDataToDb()
 
-	db.DB().SetMaxIdleConns(10)
-	db.DB().SetMaxOpenConns(100)
+	//var err error
+	//db, err = gorm.Open(dialect, dbArgs)
+	//if err != nil {
+	//	log.Fatalf("models.SetupConnection err: %v", err)
+	//}
+	//db.LogMode(true)
+	//db.DB().SetMaxIdleConns(10)
+	//db.DB().SetMaxOpenConns(100)
 }
 
 // CloseDB closes database connection (unnecessary)
@@ -46,6 +49,6 @@ func CloseDB() {
 	defer db.Close()
 }
 
-func GetDB() *gorm.DB {
+func GetDB() *sqlx.DB {
 	return db
 }
